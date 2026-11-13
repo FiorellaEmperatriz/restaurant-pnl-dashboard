@@ -6,6 +6,8 @@ A lightweight web app, built on Google Sheets and Google Apps Script, that gives
 
 ![Dashboard overview](docs/screenshots/overview.png)
 
+**Live demo:** https://script.google.com/macros/s/AKfycbyMzc75dI4BYynJJ15PxKmyhxITidL7y9AXTfSFqJVM9LGJr3X8PoR0-Zb_wiZFMH_8AQ/exec
+
 ## The problem
 
 Multi-site hospitality owners usually learn how each site performed weeks later, from spreadsheets that every manager formats differently. By the time a labour or food-cost problem is visible, it has already eaten several weeks of margin.
