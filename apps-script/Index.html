@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Weekly Performance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --forest: #0f4d2e;
+      --forest-dark: #072a19;
+      --cream: #fbf9f4;
+      --sand: #efeae0;
+      --ink: #1d2b24;
+      --muted: #66736c;
+      --line: #e3ddd0;
+      --good: #1f7a4d;
+      --warn: #b7791f;
+      --bad: #b83b3b;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--cream); color: var(--ink);
+      font-family: 'Inter', system-ui, sans-serif; font-size: 15px; line-height: 1.45;
+    }
+    h1, h2, h3 { font-family: 'Poppins', 'Inter', sans-serif; font-weight: 600; margin: 0; color: var(--forest-dark); }
+    header {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+      padding: 16px 24px; background: #fff; border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 34px; height: 34px; border-radius: 9px; background: var(--forest-dark); display: grid; place-items: center; color: var(--cream); font-size: 18px; }
+    .brand h1 { font-size: 18px; }
+    .brand small { display: block; color: var(--muted); font-size: 12px; font-weight: 400; }
+    nav { display: flex; gap: 6px; }
+    nav button {
+      border: 1px solid var(--line); background: transparent; color: var(--ink);
+      padding: 8px 16px; border-radius: 999px; font: inherit; cursor: pointer;
+    }
+    nav button.active { background: var(--forest); color: #fff; border-color: var(--forest); }
+
+    main { max-width: 1120px; margin: 0 auto; padding: 24px 20px 60px; }
+    .hidden { display: none !important; }
+
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+    .chip {
+      border: 1px solid var(--line); background: #fff; padding: 7px 14px; border-radius: 999px;
+      font: inherit; font-size: 14px; cursor: pointer; color: var(--ink);
+    }
+    .chip.active { background: var(--forest); color: #fff; border-color: var(--forest); }
+    .spacer { flex: 1; }
+    select {
+      border: 1px solid var(--line); background: #fff; padding: 7px 10px; border-radius: 10px; font: inherit;
+    }
+
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; }
+    .kpi .label { color: var(--muted); font-size: 13px; }
+    .kpi .value { font-family: 'Poppins', sans-serif; font-size: 28px; font-weight: 600; margin: 4px 0; color: var(--forest-dark); }
+    .kpi .delta { font-size: 13px; font-weight: 500; }
+    .up { color: var(--good); } .down { color: var(--bad); } .flat { color: var(--muted); }
+    .kpi .target { font-size: 12px; color: var(--muted); }
+
+    .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .card h2 { font-size: 16px; margin-bottom: 4px; }
+    .card .sub { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+    .chart-wrap { position: relative; height: 260px; }
+
+    .insight { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+    .insight:first-of-type { border-top: 0; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 6px; flex: none; }
+    .dot.high { background: var(--bad); } .dot.medium { background: var(--warn); } .dot.ok { background: var(--good); }
+    .insight b { display: block; }
+    .insight .where { font-size: 12px; color: var(--muted); }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: right; padding: 10px 8px; border-top: 1px solid var(--line); }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); font-weight: 500; font-size: 12px; border-top: 0; }
+    td.bad { color: var(--bad); font-weight: 600; }
+    td.good { color: var(--good); font-weight: 600; }
+
+    form { display: grid; gap: 14px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+    input {
+      border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; color: var(--ink); background: #fff;
+    }
+    input:focus, select:focus { outline: 2px solid var(--forest); outline-offset: 1px; }
+    .btn {
+      background: var(--forest); color: #fff; border: 0; padding: 12px 20px; border-radius: 12px;
+      font: inherit; font-weight: 500; cursor: pointer; justify-self: start;
+    }
+    .btn.secondary { background: transparent; color: var(--forest); border: 1px solid var(--forest); }
+    .btn:disabled { opacity: .55; cursor: wait; }
+    .msg { padding: 10px 14px; border-radius: 10px; font-size: 14px; }
+    .msg.ok { background: #e6f3ec; color: var(--good); }
+    .msg.err { background: #fbeaea; color: var(--bad); }
+    .note { font-size: 12px; color: var(--muted); }
+    .loading { color: var(--muted); padding: 40px 0; text-align: center; }
+
+    @media (max-width: 520px) {
+      .grid2 { grid-template-columns: minmax(0, 1fr); }
+      .kpi .value { font-size: 24px; }
+      header { padding: 14px 16px; }
+      main { padding: 16px 14px 48px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">&#10022;</div>
+      <div>
+        <h1 id="company">Weekly Performance</h1>
+        <small>Demo with fictional data</small>
+      </div>
+    </div>
+    <nav>
+      <button id="tabDash" class="active" type="button">Dashboard</button>
+      <button id="tabSubmit" type="button">Submit a week</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============ DASHBOARD ============ -->
+    <section id="viewDash">
+      <div class="toolbar">
+        <div id="siteChips" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+        <div class="spacer"></div>
+        <label style="display:flex; align-items:center; gap:8px; flex-direction:row;">
+          Show
+          <select id="range">
+            <option value="8">last 8 weeks</option>
+            <option value="13" selected>last 13 weeks</option>
+            <option value="26">last 26 weeks</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="dashBody"><div class="loading">Loading performance data...</div></div>
+    </section>
+
+    <!-- ============ SUBMIT ============ -->
+    <section id="viewSubmit" class="hidden">
+      <div class="card" style="max-width: 760px;">
+        <h2>Submit your weekly P&amp;L</h2>
+        <p class="sub">Each manager can only submit for their own site. Sending the same week again replaces the earlier entry.</p>
+
+        <form id="signinForm">
+          <div class="form-grid">
+            <label>Email<input id="email" type="email" autocomplete="username" required></label>
+            <label>Access code<input id="code" type="password" autocomplete="current-password" required></label>
+          </div>
+          <button class="btn" type="submit">Sign in</button>
+          <p class="note">Demo codes are in the README (Managers tab). Real deployments should use Google sign-in.</p>
+          <div id="signinMsg"></div>
+        </form>
+
+        <form id="weekForm" class="hidden">
+          <div class="msg ok" id="whoami"></div>
+          <div class="form-grid">
+            <label>Week ending (Sunday)<input id="f_week" type="date" required></label>
+            <label>Covers (customers served)<input id="f_covers" type="number" min="0" step="1" required></label>
+          </div>
+          <h3 style="font-size:14px;">Sales</h3>
+          <div class="form-grid">
+            <label>Food sales (&pound;)<input id="f_food_sales" type="number" min="0" step="0.01" required></label>
+            <label>Drink sales (&pound;)<input id="f_drink_sales" type="number" min="0" step="0.01" required></label>
+          </div>
+          <h3 style="font-size:14px;">Costs</h3>
+          <div class="form-grid">
+            <label>Food cost of goods (&pound;)<input id="f_food_cogs" type="number" min="0" step="0.01" required></label>
+            <label>Drink cost of goods (&pound;)<input id="f_drink_cogs" type="number" min="0" step="0.01" required></label>
+            <label>Labour (&pound;)<input id="f_labour" type="number" min="0" step="0.01" required></label>
+            <label>Rent (&pound;)<input id="f_rent" type="number" min="0" step="0.01" required></label>
+            <label>Utilities (&pound;)<input id="f_utilities" type="number" min="0" step="0.01" required></label>
+            <label>Marketing (&pound;)<input id="f_marketing" type="number" min="0" step="0.01" required></label>
+            <label>Other costs (&pound;)<input id="f_other_costs" type="number" min="0" step="0.01" required></label>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" id="submitBtn" type="submit">Submit week</button>
+            <button class="btn secondary" id="signOutBtn" type="button">Sign out</button>
+          </div>
+          <div id="submitMsg"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    var state = { site: 'All sites', weeks: 13, sites: [], targets: {}, token: null, charts: [] };
+
+    // ----------------------------------------------------------- helpers --
+    function gbp(n) { return '£' + Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+    function pct(n) { return (Math.round(n * 10) / 10) + '%'; }
+    function el(id) { return document.getElementById(id); }
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function shortDate(iso) {
+      var p = iso.split('-');
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return parseInt(p[2], 10) + ' ' + months[parseInt(p[1], 10) - 1];
+    }
+
+    // ------------------------------------------------------------- tabs --
+    el('tabDash').onclick = function () { showTab('dash'); };
+    el('tabSubmit').onclick = function () { showTab('submit'); };
+    function showTab(which) {
+      el('viewDash').classList.toggle('hidden', which !== 'dash');
+      el('viewSubmit').classList.toggle('hidden', which !== 'submit');
+      el('tabDash').classList.toggle('active', which === 'dash');
+      el('tabSubmit').classList.toggle('active', which === 'submit');
+    }
+
+    // -------------------------------------------------------- bootstrap --
+    google.script.run
+      .withSuccessHandler(function (boot) {
+        state.sites = ['All sites'].concat(boot.sites);
+        state.targets = boot.targets;
+        el('company').textContent = boot.company;
+        drawChips();
+        loadDashboard();
+      })
+      .withFailureHandler(function (err) {
+        el('dashBody').innerHTML = '<div class="msg err">Could not load data: ' + esc(err.message) + '</div>';
+      })
+      .getBootstrap();
+
+    function drawChips() {
+      el('siteChips').innerHTML = '';
+      state.sites.forEach(function (s) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'chip' + (s === state.site ? ' active' : '');
+        b.textContent = s;
+        b.onclick = function () { state.site = s; drawChips(); loadDashboard(); };
+        el('siteChips').appendChild(b);
+      });
+    }
+    el('range').onchange = function () { state.weeks = parseInt(this.value, 10); loadDashboard(); };
+
+    function loadDashboard() {
+      el('dashBody').innerHTML = '<div class="loading">Loading performance data...</div>';
+      google.script.run
+        .withSuccessHandler(renderDashboard)
+        .withFailureHandler(function (err) {
+          el('dashBody').innerHTML = '<div class="msg err">' + esc(err.message) + '</div>';
+        })
+        .getDashboard(state.site, state.weeks);
+    }
+
+    // ----------------------------------------------------------- render --
+    function deltaHtml(cur, prev, goodWhenUp, suffix) {
+      if (prev === null || prev === undefined) return '<span class="delta flat">No previous week</span>';
+      var d = cur - prev;
+      if (Math.abs(d) < 0.05) return '<span class="delta flat">Flat vs last week</span>';
+      var up = d > 0;
+      var good = goodWhenUp ? up : !up;
+      var arrow = up ? '▲' : '▼';
+      var val = suffix === 'pts' ? Math.abs(Math.round(d * 10) / 10) + ' pts' : gbp(Math.abs(d));
+      return '<span class="delta ' + (good ? 'up' : 'down') + '">' + arrow + ' ' + val + ' vs last week</span>';
+    }
+
+    function kpi(label, value, deltaHtmlStr, targetStr) {
+      return '<div class="card kpi"><div class="label">' + label + '</div><div class="value">' + value +
+        '</div>' + deltaHtmlStr + (targetStr ? '<div class="target">' + targetStr + '</div>' : '') + '</div>';
+    }
+
+    function renderDashboard(d) {
+      state.charts.forEach(function (c) { c.destroy(); });
+      state.charts = [];
+
+      if (!d || !d.latest) {
+        el('dashBody').innerHTML = '<div class="card">No data for this selection yet.</div>';
+        return;
+      }
+      var L = d.latest, P = d.previous, T = state.targets;
+
+      var html = '';
+      html += '<p class="note" style="margin-bottom:12px;">Latest week ending ' + shortDate(L.week) + ' &middot; ' + esc(L.site) + '</p>';
+      html += '<div class="kpis">' +
+        kpi('Sales', gbp(L.sales), deltaHtml(L.sales, P && P.sales, true, 'gbp'), '') +
+        kpi('Gross margin', pct(L.grossPct), deltaHtml(L.grossPct, P && P.grossPct, true, 'pts'), 'Cost of goods ' + pct(L.cogsPct) + ' (target ' + T.cogsPct + '%)') +
+        kpi('Labour % of sales', pct(L.labourPct), deltaHtml(L.labourPct, P && P.labourPct, false, 'pts'), 'Target ' + T.labourPct + '%') +
+        kpi('EBITDA margin', pct(L.ebitdaPct), deltaHtml(L.ebitdaPct, P && P.ebitdaPct, true, 'pts'), gbp(L.ebitda) + ' this week (target ' + T.ebitdaPct + '%)') +
+        '</div>';
+
+      html += '<div class="grid2">' +
+        '<div class="card"><h2>Sales and EBITDA margin</h2><p class="sub">Weekly sales (bars) and EBITDA margin (line)</p><div class="chart-wrap"><canvas id="chartSales"></canvas></div></div>' +
+        '<div class="card"><h2>Labour and cost of goods</h2><p class="sub">% of sales. Dashed lines are the targets</p><div class="chart-wrap"><canvas id="chartCosts"></canvas></div></div>' +
+        '</div>';
+
+      html += '<div class="grid2">';
+
+      // Insights
+      html += '<div class="card"><h2>What needs attention</h2><p class="sub">Rule-based checks across all sites, using the last few weeks</p>';
+      d.insights.forEach(function (i) {
+        html += '<div class="insight"><span class="dot ' + i.level + '"></span><div><b>' + esc(i.title) + '</b>' +
+          '<span class="where">' + esc(i.site) + '</span><div>' + esc(i.detail) + '</div></div></div>';
+      });
+      html += '</div>';
+
+      // Ranking
+      html += '<div class="card"><h2>Site ranking, latest week</h2><p class="sub">Sorted by EBITDA margin</p>' +
+        '<div style="overflow-x:auto;"><table><thead><tr><th>Site</th><th>Sales</th><th>Labour</th><th>COGS</th><th>EBITDA</th></tr></thead><tbody>';
+      d.ranking.forEach(function (r) {
+        html += '<tr><td>' + esc(r.site) + '</td><td>' + gbp(r.sales) + '</td>' +
+          '<td class="' + (r.labourPct > T.labourPct ? 'bad' : '') + '">' + pct(r.labourPct) + '</td>' +
+          '<td class="' + (r.cogsPct > T.cogsPct ? 'bad' : '') + '">' + pct(r.cogsPct) + '</td>' +
+          '<td class="' + (r.ebitdaPct >= T.ebitdaPct ? 'good' : 'bad') + '">' + pct(r.ebitdaPct) + '</td></tr>';
+      });
+      html += '</tbody></table></div></div></div>';
+
+      el('dashBody').innerHTML = html;
+      drawCharts(d.series, T);
+    }
+
+    function drawCharts(series, T) {
+      var labels = series.map(function (s) { return shortDate(s.week); });
+      var forest = '#0f4d2e', sage = '#a9c4b3', amber = '#b7791f', ink = '#1d2b24';
+      Chart.defaults.font.family = "'Inter', sans-serif";
+      Chart.defaults.color = '#66736c';
+
+      state.charts.push(new Chart(el('chartSales'), {
+        data: {
+          labels: labels,
+          datasets: [
+            { type: 'bar', label: 'Sales (£)', data: series.map(function (s) { return Math.round(s.sales); }),
+              backgroundColor: sage, borderRadius: 4, yAxisID: 'y', order: 2 },
+            { type: 'line', label: 'EBITDA margin (%)', data: series.map(function (s) { return s.ebitdaPct; }),
+              borderColor: forest, backgroundColor: forest, tension: .3, pointRadius: 3, yAxisID: 'y1', order: 1 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
+          scales: {
+            y: { beginAtZero: true, grid: { color: '#eee9dd' }, ticks: { callback: function (v) { return '£' + (v / 1000) + 'k'; } } },
+            y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: function (v) { return v + '%'; } } }
+          }
+        }
+      }));
+
+      state.charts.push(new Chart(el('chartCosts'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'Labour %', data: series.map(function (s) { return s.labourPct; }), borderColor: forest, backgroundColor: forest, tension: .3, pointRadius: 3 },
+            { label: 'Cost of goods %', data: series.map(function (s) { return s.cogsPct; }), borderColor: amber, backgroundColor: amber, tension: .3, pointRadius: 3 },
+            { label: 'Labour target', data: series.map(function () { return T.labourPct; }), borderColor: forest, borderDash: [6, 5], pointRadius: 0, borderWidth: 1.2 },
+            { label: 'COGS target', data: series.map(function () { return T.cogsPct; }), borderColor: amber, borderDash: [6, 5], pointRadius: 0, borderWidth: 1.2 }
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } },
+          scales: { y: { grid: { color: '#eee9dd' }, ticks: { callback: function (v) { return v + '%'; } } } }
+        }
+      }));
+    }
+
+    // ------------------------------------------------------ sign in / submit --
+    el('signinForm').onsubmit = function (e) {
+      e.preventDefault();
+      el('signinMsg').innerHTML = '';
+      google.script.run
+        .withSuccessHandler(function (res) {
+          if (!res.ok) { el('signinMsg').innerHTML = '<div class="msg err">' + esc(res.message) + '</div>'; return; }
+          state.token = res.token;
+          el('whoami').textContent = 'Signed in as ' + res.name + ' · ' + res.site;
+          el('signinForm').classList.add('hidden');
+          el('weekForm').classList.remove('hidden');
+        })
+        .withFailureHandler(function (err) { el('signinMsg').innerHTML = '<div class="msg err">' + esc(err.message) + '</div>'; })
+        .signIn(el('email').value, el('code').value);
+    };
+
+    el('signOutBtn').onclick = function () {
+      state.token = null;
+      el('weekForm').classList.add('hidden');
+      el('signinForm').classList.remove('hidden');
+      el('code').value = '';
+      el('submitMsg').innerHTML = '';
+    };
+
+    el('weekForm').onsubmit = function (e) {
+      e.preventDefault();
+      var fields = ['food_sales', 'drink_sales', 'food_cogs', 'drink_cogs', 'labour', 'rent', 'utilities', 'marketing', 'other_costs', 'covers'];
+      var payload = { week_ending: el('f_week').value };
+      fields.forEach(function (f) { payload[f] = el('f_' + f).value; });
+
+      el('submitBtn').disabled = true;
+      el('submitMsg').innerHTML = '';
+      google.script.run
+        .withSuccessHandler(function (res) {
+          el('submitBtn').disabled = false;
+          el('submitMsg').innerHTML = '<div class="msg ' + (res.ok ? 'ok' : 'err') + '">' + esc(res.message) + '</div>';
+          if (res.ok) loadDashboard();
+        })
+        .withFailureHandler(function (err) {
+          el('submitBtn').disabled = false;
+          el('submitMsg').innerHTML = '<div class="msg err">' + esc(err.message) + '</div>';
+        })
+        .submitWeek(state.token, payload);
+    };
+  </script>
+</body>
+</html>
